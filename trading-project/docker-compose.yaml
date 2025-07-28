@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+
+  valkey:   # <-- service name
+    image: valkey/valkey:latest
+    command: valkey-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey_data:/data
+
+  db:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456789
+      MYSQL_DATABASE: db-trading
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - mariadb_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  app:
+    build: .
+    ports:
+      - "8090:8090"
+    depends_on:
+      - db
+    environment:
+      JWT_SECRET: your_secret_key
+      JWT_REFRESH_SECRET: your_refresh_secret_key
+      DB_HOST: db
+      DB_USER: myuser
+      DB_PASSWORD: mypassword
+      DB_NAME: db-trading
+
+volumes:
+  mariadb_data:
+  valkey_data:
